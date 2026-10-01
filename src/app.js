@@ -14,6 +14,7 @@ app.use(express.json({ limit: "100kb" }));
 app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
 app.get('/health', (req, res) => {
 res.status(200).json({ status: 'ok', message: 'Backend is live!' });
+});
 
 
 app.use("/api/auth", rateLimit({
@@ -51,4 +52,4 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-module.exports = app;}
+module.exports = app;
