@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+}
+
+enum OrderStatus {
+  PENDING
+  FILLED
+  CANCELLED
+  REJECTED
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRADE
+  FEE
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  account      Account?
+  orders       Order[]
+  positions    Position[]
+  transactions Transaction[]
+  sessions     Session[]
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(10000)
+  equity    Float    @default(10000)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  symbol      String
+  side        OrderSide
+  type        OrderType
+  quantity    Float
+  price       Float?
+  filledPrice Float?
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([symbol])
+}
+
+model Position {
+  id             String       @id @default(cuid())
+  userId         String
+  symbol         String
+  side           PositionSide
+  quantity       Float
+  entryPrice     Float
+  currentPrice   Float
+  unrealizedPnl  Float        @default(0)
+  openedAt       DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, symbol])
+}
+
+model Transaction {
+  id        String          @id @default(cuid())
+  userId    String
+  type      TransactionType
+  amount    Float
+  currency  String          @default("USD")
+  reference String?
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
